@@ -251,7 +251,10 @@ ENDIF()
 #------------------------------------------------
 ADD_SUBDIRECTORY(src)
 IF(NOT ANDROID_CREATION)
-  ADD_SUBDIRECTORY(utils)
+    OPTION(BUILD_UTILS 	"Set to ON to build/install utilities" OFF)
+    IF(BUILD_UTILS)
+        ADD_SUBDIRECTORY(utils)
+    ENDIF()
 ENDIF()
 
 
