@@ -215,7 +215,7 @@ double tick = (double)cv::getTickCount();
       cv::perspectiveTransform(_pixelsVector, transformedPixels, _perpTrans);        
 		
              AvrgTime.first+=((double)cv::getTickCount()-tick)/cv::getTickFrequency(); AvrgTime.second++;      
- 	    cout<<"Time cc detection="<<1000*AvrgTime.first/AvrgTime.second<<" milliseconds"<<endl;		
+ 	    //cout<<"Time cc detection="<<1000*AvrgTime.first/AvrgTime.second<<" milliseconds"<<endl;		
       
  
             
