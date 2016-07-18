@@ -1,10 +1,17 @@
 INCLUDE_DIRECTORIES(.)
+
+
 FILE(GLOB hdrs "*.h*")
 FILE(GLOB srcs "*.c*")
 
 
-SET(hdrs ${hdrs})
-SET(srcs ${srcs})
+
+
+SET(detectors_src   markerlabelers/dictionary_based.cpp    markerlabelers/svmmarkers.cpp )
+SET(detectors_hdr   markerlabelers/dictionary_based.h      markerlabelers/svmmarkers.h)
+
+SET(hdrs ${hdrs} ${detectors_hdr})
+SET(srcs ${srcs} ${detectors_src})
 
 
 ADD_LIBRARY(${PROJECT_NAME} ${srcs} ${hdrs})

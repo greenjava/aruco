@@ -4,7 +4,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 PROJECT(aruco)
-set(PROJECT_VERSION "1.3.0")
+set(PROJECT_VERSION "2.0.7")
 string(REGEX MATCHALL "[0-9]" PROJECT_VERSION_PARTS "${PROJECT_VERSION}")
 list(GET PROJECT_VERSION_PARTS 0 PROJECT_VERSION_MAJOR)
 list(GET PROJECT_VERSION_PARTS 1 PROJECT_VERSION_MINOR)
@@ -32,17 +32,18 @@ if(WIN32)
     SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin CACHE PATH "Directory for binaries")
     SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin CACHE PATH "Directory for dlls")
 
-    OPTION(BUILD_GLSAMPLES 	"Set to OFF to build static libraries" OFF)
 else()
     # Postfix of so's:
     set(PROJECT_DLLVERSION)   
-    OPTION(BUILD_GLSAMPLES 	"Set to OFF to build static libraries" ON)
 #    SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_INSTALL_PREFIX}/lib/cmake/ /usr/lib/cmake)
 endif()
 
+OPTION(USE_OWN_EIGEN3	"Set to OFF to use a standard eigen3 version" ON)
+OPTION(USE_DOUBLE_PRECISION_PNP "Set Double/float precision for posetracker" ON)
 OPTION(BUILD_UTILS	"Set to OFF to not compile utils " ON)
+OPTION(BUILD_TESTS	"Set to OFF to not compile utils " OFF)
 OPTION(BUILD_SHARED_LIBS 	"Set to OFF to build static libraries" ON)
-
+OPTION(BUILD_GLSAMPLES 	"Set to OFF to build static libraries" OFF)
 # ----------------------------------------------------------------------------
 #   Find Dependencies
 # ----------------------------------------------------------------------------
@@ -51,12 +52,26 @@ FIND_PACKAGE(OpenCV 	REQUIRED )
 set (REQUIRED_LIBRARIES ${OpenCV_LIBS})
 INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
 
-# Check if we have OpenCV 3
-string(REPLACE "." ";" OPENCV_VERSION_LIST ${OpenCV_VERSION})
-list(GET OPENCV_VERSION_LIST 0 OPENCV_VERSION_MAJOR)
-IF( ${OPENCV_VERSION_MAJOR} STREQUAL "3" )
+if(OpenCV_VERSION VERSION_LESS "3.0")#Opencv 2 requires the ad-hoc levmarq method for tracking since solvePnp from intrinsicguess does not work
+    IF(NOT USE_OWN_EIGEN3)
+        find_package( Eigen3 REQUIRED )
+    ELSE()
+        set(EIGEN3_INCLUDE_DIR "3rdparty/eigen3")
+    ENDIF()
+    include_directories( ${EIGEN3_INCLUDE_DIR} )
+
+    IF(USE_DOUBLE_PRECISION_PNP)
+        ADD_DEFINITIONS(-DDOUBLE_PRECISION_PNP)
+    ENDIF()
+ELSE()
     ADD_DEFINITIONS(-DOPENCV_VERSION_3)
 ENDIF()
+
+
+
+# Check if we have OpenCV 3
+
+
 
 
 IF(EXISTS ${GLUT_PATH})
@@ -239,7 +254,7 @@ IF(CMAKE_COMPILER_IS_GNUCXX OR MINGW)
     message( STATUS "GNU COMPILER")
     MESSAGE( STATUS "-------------------------------------------------------------------------------" )
 
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EXTRA_C_FLAGS}")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EXTRA_C_FLAGS} -std=c++11")
     SET(CMAKE_CXX_FLAGS_RELEASE "${EXTRA_C_FLAGS_RELEASE}")
     SET(CMAKE_CXX_FLAGS_DEBUG "${EXTRA_C_FLAGS_DEBUG}")
     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${EXTRA_EXE_LINKER_FLAGS}")
@@ -247,29 +262,6 @@ IF(CMAKE_COMPILER_IS_GNUCXX OR MINGW)
     SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} ${EXTRA_EXE_LINKER_FLAGS_DEBUG}")
 ENDIF	()
 
-# ----------------------------------------------------------------------------
-#   PACKAGE GENERATOR
-# ----------------------------------------------------------------------------
-
-IF (UNIX)
-SET(CPACK_GENERATOR "DEB")
-SET(CPACK_PACKAGE_CONTACT "rmsalinas@uco.es")
-SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "rmsalinas@uco.es")
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "ArUco Library")
-SET(CPACK_PACKAGE_VENDOR "Rafael Munoz-Salinas. AVA Group. University of Cordoba. Spain")
-SET(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
-SET(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
-SET(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
-SET(CPACK_PACKAGE_INSTALL_DIRECTORY "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}")
-SET(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-SET(CPACK_STRIP_FILES "bin/lib${PROJECT_NAME}")
-SET(CPACK_SOURCE_STRIP_FILES "")
-SET(CPACK_PACKAGING_INSTALL_PREFIX "/usr/")
-IF (CPACK_GENERATOR STREQUAL "DEB")
-    SET(CPACK_DEBIAN_PACKAGE_DEPENDS "opencv (>= 2.1.0)")
-ENDIF()
-INCLUDE(CPack)
-ENDIF()
 
 #------------------------------------------------
 # DIRS
@@ -277,7 +269,15 @@ ENDIF()
 ADD_SUBDIRECTORY(src)
 IF(BUILD_UTILS)
   ADD_SUBDIRECTORY(utils)
-  ADD_SUBDIRECTORY(utils_hrm)
+  ADD_SUBDIRECTORY(utils_markermap)
+  ADD_SUBDIRECTORY(utils_calibration)
+#  ADD_SUBDIRECTORY(utils_svm)
+ENDIF()
+IF(GL_FOUND AND BUILD_GLSAMPLES)
+  ADD_SUBDIRECTORY(utils_gl)
+ENDIF()
+IF(BUILD_TESTS)
+  ADD_SUBDIRECTORY(tests)
 ENDIF()
 
 
@@ -313,8 +313,11 @@ MESSAGE( STATUS "USE_DOT = ${USE_DOT}" )
 MESSAGE( STATUS "USE_CHM = ${USE_CHM}" )
 MESSAGE( STATUS )
 MESSAGE( STATUS "FOUND OPENGL=${GL_FOUND}    LIBS=${OPENGL_LIBS}")
-MESSAGE( STATUS "OpenCV_LIB_DIR=${OpenCV_LIB_DIR}")
+MESSAGE( STATUS "OpenCV_LIB_DIR=${OpenCV_LIB_DIR} OpenCV_INCLUDE_DIRS=${OpenCV_INCLUDE_DIRS}")
 MESSAGE( STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}")
+MESSAGE( STATUS "USE_OWN_EIGEN3=${USE_OWN_EIGEN3} EIGEN3_INCLUDE_DIR=${EIGEN3_INCLUDE_DIR}")
+
+
 MESSAGE( STATUS )
 MESSAGE( STATUS )
 MESSAGE( STATUS "Change a value with: cmake -D<Variable>=<Value>" )

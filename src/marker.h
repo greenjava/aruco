@@ -27,10 +27,11 @@ or implied, of Rafael Muñoz Salinas.
 ********************************/
 #ifndef _Aruco_Marker_H
 #define _Aruco_Marker_H
+#include "exports.h"
 #include <vector>
 #include <iostream>
+#include <cstdint>
 #include <opencv2/core/core.hpp>
-#include "exports.h"
 #include "cameraparameters.h"
 using namespace std;
 namespace aruco {
@@ -50,6 +51,9 @@ class ARUCO_EXPORTS Marker : public std::vector< cv::Point2f > {
     /**
      */
     Marker();
+    /**
+     */
+    Marker(int id);
     /**
      */
     Marker(const Marker &M);
@@ -107,8 +111,9 @@ class ARUCO_EXPORTS Marker : public std::vector< cv::Point2f > {
     /**Returns the area
      */
     float getArea() const;
-    /**
+    /**compares ids
      */
+    bool operator==(const Marker &m)const{return m.id==id;}
     /**
      */
     friend bool operator<(const Marker &M1, const Marker &M2) { return M1.id < M2.id; }
@@ -129,6 +134,13 @@ class ARUCO_EXPORTS Marker : public std::vector< cv::Point2f > {
     }
 
 
+    //saves to a binary stream
+    void toStream(ostream &str)const;
+    //reads from a binary stream
+    void fromStream(istream &str);
+
+    //returns the 3d points of a marker wrt its center
+    static vector<cv::Point3f> get3DPoints(float msize);
   private:
     void rotateXAxis(cv::Mat &rotation);
 };

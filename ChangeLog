@@ -1,3 +1,30 @@
+Version 2.0.7
+  - removed <omp.h> from levmarq.h and included "ar_omp.h" instead
+  - M_PI substituted by 3.1415....
+  - added MarkerMap::calculateExtrinsics
+  - Conditional use of eigen3. It is only used if compiled against opencv2. In Opencv3 solvePnp works properly
+Version 2.0.6
+  - Many warnings removed
+Version 2.0.5
+  - Corrected bug in MarkerMapPoseTracker
+
+VERSION 2.0.4
+  - C++11 code 
+  - Markers ids are 64 bits (8x8)
+  - Predefined set of dictionaries. It includes ARUCO, ARUCOHRM, AprilTags, ArToolKit and ARTAG
+  - Added marker tracker. Avoids the problem of ambuguity? Hopefully
+  - Chromatic mask removed from libary.
+  - Removed Board and BoardDetector. This concepts are now expanded to the idea of MarkerMap and managed in classes MarkerInfo, MarkerMap and MarkerSetPoseTracker.
+    see utils_markerset for more examples.
+        This is to allow compatibility with the twin libary aruco_markermapper
+VERSION 1.3.1
+  - Added MarkerDetector::Param class to encapsulate all of them.
+  - Added calibration tool in utils/aruco_calibrate that uses aruco chessboards
+  - removed MarkerDetector::setDesiredSpeed and MarkerDetector::getDesiredSpeed
+  - removed HARRIS corner method from markerdetector and locked corners stuff
+  - Add SVMMarkers class to detect markers with generic patterns using a trained SVM model.
+  - Code refactoring to encapsulate the detectors into classes. Added the class MarkerLabeler and its factory creator
+  - in aruco_create_board, random seed is now manually set if, or 0 if not. This creates by default always the same board
 VERSION 1.3
   - Compatibility with OpenCV 3
   - In Marker Detector:
