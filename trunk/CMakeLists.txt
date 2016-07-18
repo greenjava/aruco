@@ -4,7 +4,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 PROJECT(aruco)
-set(PROJECT_VERSION "1.2.4")
+set(PROJECT_VERSION "1.2.5")
 string(REGEX MATCHALL "[0-9]" PROJECT_VERSION_PARTS "${PROJECT_VERSION}")
 list(GET PROJECT_VERSION_PARTS 0 PROJECT_VERSION_MAJOR)
 list(GET PROJECT_VERSION_PARTS 1 PROJECT_VERSION_MINOR)
@@ -32,8 +32,8 @@ if(WIN32)
     SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin CACHE PATH "Directory for dlls")
 else()
     # Postfix of so's:
-    set(PROJECT_DLLVERSION)
-    SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_INSTALL_PREFIX}/lib/cmake/ /usr/lib/cmake)
+    set(PROJECT_DLLVERSION)   
+#    SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_INSTALL_PREFIX}/lib/cmake/ /usr/lib/cmake)
 endif()
 
 
@@ -71,6 +71,13 @@ IF(NOT ANDROID_CREATION)
   ENDIF()
 ENDIF()
 
+#Omp
+FIND_PACKAGE(OpenMP)
+IF(OPENMP_FOUND)
+  add_definitions(-DUSE_OMP -fopenmp)
+  set (REQUIRED_LIBRARIES ${REQUIRED_LIBRARIES} -lgomp)
+ENDIF()
+
 # ----------------------------------------------------------------------------
 #   PROJECT CONFIGURATION
 #   force some variables that could be defined in the command line to be written to cache
@@ -96,8 +103,8 @@ ADD_CUSTOM_TARGET(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/c
 # create configuration file from .in file (If you use windows take care with paths)
 # ----------------------------------------------------------------------------
 
-CONFIGURE_FILE("${PROJECT_SOURCE_DIR}/config.cmake.in" "${PROJECT_BINARY_DIR}/Find${PROJECT_NAME}.cmake")
-INSTALL(FILES "${PROJECT_BINARY_DIR}/Find${PROJECT_NAME}.cmake" DESTINATION lib/cmake/ )
+CONFIGURE_FILE("${PROJECT_SOURCE_DIR}/config.cmake.in" "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake")
+INSTALL(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" DESTINATION share/${PROJECT_NAME}/ )
 
 
 
@@ -250,10 +257,11 @@ ENDIF()
 #------------------------------------------------
 ADD_SUBDIRECTORY(src)
 IF(NOT ANDROID_CREATION)
-    OPTION(BUILD_UTILS 	"Set to ON to build/install utilities" OFF)
-    IF(BUILD_UTILS)
-        ADD_SUBDIRECTORY(utils)
-    ENDIF()
+  OPTION(BUILD_UTILS "Set to ON to build/install utilities" OFF)
+  IF(BUILD_UTILS)
+    ADD_SUBDIRECTORY(utils)
+    ADD_SUBDIRECTORY(utils_hrm)
+  ENDIF()
 ENDIF()
 
 
